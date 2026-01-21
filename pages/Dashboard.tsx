@@ -112,36 +112,49 @@ export const Dashboard: React.FC = () => {
           {campuses.map(campus => {
             const summary = getLastReportSummary(campus.id);
 
+            // Format Name Helper
+            const formatName = (name: string) => {
+              if (name.toLowerCase().includes('campus')) {
+                return { line1: 'INA CAMPUS', line2: name.replace(/ina campus/i, '').trim() };
+              }
+              return { line1: 'INA', line2: name.replace(/ina/i, '').trim() };
+            };
+
+            const { line1, line2 } = formatName(campus.name);
+
             return (
               <NeoCard
                 key={campus.id}
                 color={campus.color}
-                className="relative min-h-[140px] flex flex-col justify-between hover:-translate-y-1 hover:-translate-x-1 hover:shadow-neo-hover transition-all duration-200"
+                className="relative min-h-[120px] flex flex-col justify-between hover:-translate-y-1 hover:-translate-x-1 hover:shadow-neo-hover transition-all duration-200"
                 onClick={() => navigate(`/campus/${campus.id}`)}
               >
-                <div className="relative z-10 flex justify-between items-start">
-                  <div>
-                    <h2 className="text-xl md:text-3xl font-bold uppercase mb-2 leading-tight max-w-[80%]">{campus.name}</h2>
-                    <div className="h-1 w-12 bg-black mb-2"></div>
+                <div className="relative z-10 flex justify-between items-start mb-2">
+                  <div className="flex flex-col items-start">
+                    <span className="font-bold text-lg leading-none mb-1">{line1}</span>
+                    <div className="relative inline-block">
+                      <span className="font-black text-2xl md:text-3xl leading-none uppercase z-10 relative">{line2}</span>
+                      <div className="absolute -bottom-1 left-0 w-full h-2 bg-black z-0"></div>
+                    </div>
                   </div>
                 </div>
 
                 {summary ? (
-                  <div className="bg-white border-2 border-black p-2 self-start shadow-neo-sm relative z-10">
-                    <div className="text-[10px] font-bold uppercase text-gray-500 mb-0.5">Último Culto ({summary.date})</div>
-                    <div className="flex items-center gap-2">
+                  <div className="bg-white border-2 border-black p-2 self-start shadow-neo-sm relative z-10 mt-2">
+                    <div className="text-[10px] font-bold uppercase text-gray-500 mb-0.5 leading-none">Último Culto ({summary.date})</div>
+                    <div className="flex items-center gap-1">
                       <Users size={16} />
-                      <span className="font-bold text-xl">{summary.total} Pessoas</span>
+                      <span className="font-bold text-lg leading-none">{summary.total} Pessoas</span>
                     </div>
                   </div>
                 ) : (
-                  <div className="opacity-50 font-bold text-xs italic border-2 border-dashed border-black p-2 inline-block relative z-10 bg-white/30 backdrop-blur-sm">
+                  <div className="opacity-50 font-bold text-xs italic border-2 border-dashed border-black p-2 inline-block relative z-10 bg-white/30 backdrop-blur-sm mt-2">
                     Sem dados recentes
                   </div>
                 )}
 
                 <div className="absolute bottom-2 right-2 opacity-10 pointer-events-none z-0">
-                  <Users size={60} />
+                  <Users size={50} />
                 </div>
               </NeoCard>
             );
