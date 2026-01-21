@@ -6,7 +6,15 @@ import { Settings, Plus, Users, Church, Calendar } from 'lucide-react';
 
 export const Dashboard: React.FC = () => {
   const { campuses, reports } = useStore();
+  const { assignedCampusId } = useAuth();
   const navigate = useNavigate();
+
+  const visibleCampuses = useMemo(() => {
+    if (assignedCampusId) {
+      return campuses.filter(c => c.id === assignedCampusId);
+    }
+    return campuses;
+  }, [campuses, assignedCampusId]);
 
   // Helper to find last report stats (aggregated by date)
   const getLastReportSummary = (campusId: string) => {
@@ -109,7 +117,7 @@ export const Dashboard: React.FC = () => {
       {/* Content Container */}
       <div className="p-4 max-w-6xl mx-auto pb-24">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 auto-rows-fr">
-          {campuses.map(campus => {
+          {visibleCampuses.map(campus => {
             const summary = getLastReportSummary(campus.id);
 
             // Format Name Helper

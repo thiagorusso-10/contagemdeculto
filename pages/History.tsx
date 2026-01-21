@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../context/StoreContext';
+import { useAuth } from '../context/AuthContext';
 import { NeoButton } from '../components/ui/NeoButton';
 import { NeoCard } from '../components/ui/NeoCard';
 import { ArrowLeft, Calendar, ChevronDown, ChevronUp, Users, User } from 'lucide-react';
@@ -8,13 +9,20 @@ import { ArrowLeft, Calendar, ChevronDown, ChevronUp, Users, User } from 'lucide
 export const History: React.FC = () => {
     const navigate = useNavigate();
     const { reports, campuses, preachers } = useStore();
+    const { assignedCampusId } = useAuth();
     const [expandedDate, setExpandedDate] = useState<string | null>(null);
 
     // Group reports by date
     const historyData = useMemo(() => {
+        let filteredReports = reports;
+
+        if (assignedCampusId) {
+            filteredReports = reports.filter(r => r.campusId === assignedCampusId);
+        }
+
         const grouped: Record<string, { total: number; reports: typeof reports }> = {};
 
-        reports.forEach(report => {
+        filteredReports.forEach(report => {
             if (!grouped[report.date]) {
                 grouped[report.date] = { total: 0, reports: [] };
             }
