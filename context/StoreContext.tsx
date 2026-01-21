@@ -198,15 +198,19 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const deleteReport = async (id: string) => {
     // Optimistic
+    const previousReports = state.reports;
     setState(prev => ({
       ...prev,
       reports: prev.reports.filter(r => r.id !== id)
     }));
 
     const { error } = await supabase.from('reports').delete().eq('id', id);
+
     if (error) {
-      console.error("Error deleting report", error);
-      fetchData();
+      console.error("Error deleting report:", error);
+      alert("Erro ao excluir relatório no banco de dados. Verifique suas permissões.");
+      // Rollback
+      setState(prev => ({ ...prev, reports: previousReports }));
     }
   };
 
