@@ -1,6 +1,7 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useStore } from '../context/StoreContext';
+import { useAuth } from '../context/AuthContext';
 import { NeoButton } from '../components/ui/NeoButton';
 import { ArrowLeft, Plus, Calendar, User, Clock } from 'lucide-react';
 import { NeoCard } from '../components/ui/NeoCard';
@@ -9,6 +10,7 @@ export const CampusDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { campuses, reports, preachers } = useStore();
+  const { role, assignedCampusId } = useAuth();
 
   const campus = campuses.find(c => c.id === id);
   const campusReports = reports
@@ -40,8 +42,8 @@ export const CampusDetails: React.FC = () => {
           </div>
         ) : (
           campusReports.map(report => (
-            <NeoCard 
-              key={report.id} 
+            <NeoCard
+              key={report.id}
               onClick={() => navigate(`/report/edit/${report.id}`)}
               className="group"
             >
@@ -49,17 +51,17 @@ export const CampusDetails: React.FC = () => {
                 <div>
                   <div className="flex items-center gap-2 mb-2">
                     <span className="bg-black text-white px-2 py-0.5 text-sm font-bold">
-                        {new Date(report.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
+                      {new Date(report.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
                     </span>
                     <span className="font-bold text-gray-600 flex items-center gap-1 text-sm">
-                       <Clock size={14}/> {report.time}
+                      <Clock size={14} /> {report.time}
                     </span>
                   </div>
                   <div className="font-bold text-sm flex items-center gap-1 mb-2">
                     <User size={14} /> {getPreacherName(report.preacherId)}
                   </div>
                 </div>
-                
+
                 <div className="text-right">
                   <div className="text-3xl font-bold leading-none">{getTotal(report)}</div>
                   <div className="text-xs font-bold uppercase tracking-wider">Total</div>
@@ -79,14 +81,16 @@ export const CampusDetails: React.FC = () => {
         )}
       </div>
 
-      <div className="fixed bottom-6 right-6 z-10">
-        <button 
-          onClick={() => navigate(`/report/new?campusId=${id}`)}
-          className="bg-neo-yellow text-black w-16 h-16 flex items-center justify-center border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none transition-all"
-        >
-          <Plus size={32} />
-        </button>
-      </div>
+      {(role === 'admin' || (role === 'campus_leader' && assignedCampusId === id)) && (
+        <div className="fixed bottom-6 right-6 z-10">
+          <button
+            onClick={() => navigate(`/report/new?campusId=${id}`)}
+            className="bg-neo-yellow text-black w-16 h-16 flex items-center justify-center border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none transition-all"
+          >
+            <Plus size={32} />
+          </button>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useStore } from '../context/StoreContext';
+import { useAuth } from '../context/AuthContext';
 import { Report, VolunteerBreakdown } from '../types';
 import { NeoButton } from '../components/ui/NeoButton';
 import { NeoCard } from '../components/ui/NeoCard';
@@ -13,108 +14,14 @@ export const ReportForm: React.FC = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const { campuses, preachers, volunteerAreas, addReport, updateReport, deleteReport, reports, addPreacher } = useStore();
+    const { role } = useAuth(); // Get role
 
     const isEditing = !!id;
     const initialCampusId = searchParams.get('campusId') || campuses[0]?.id;
 
-    // Form State
-    const [campusId, setCampusId] = useState(initialCampusId);
-    const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-    const [time, setTime] = useState('19:30');
-    const [preacherId, setPreacherId] = useState('');
-    const [notes, setNotes] = useState('');
+    // ... (state lines)
 
-    // Metrics
-    const [adults, setAdults] = useState(0);
-    const [kids, setKids] = useState(0);
-    const [visitors, setVisitors] = useState(0);
-    const [teens, setTeens] = useState(0);
-    const [volunteerBreakdown, setVolunteerBreakdown] = useState<VolunteerBreakdown>({});
-
-    // UI State
-    const [showVolunteerModal, setShowVolunteerModal] = useState(false);
-    const [newPreacherName, setNewPreacherName] = useState('');
-    const [showAddPreacher, setShowAddPreacher] = useState(false);
-
-    // Load data if editing
-    useEffect(() => {
-        if (isEditing && id) {
-            const report = reports.find(r => r.id === id);
-            if (report) {
-                setCampusId(report.campusId);
-                setDate(report.date);
-                setTime(report.time);
-                setPreacherId(report.preacherId);
-                setNotes(report.notes);
-                setAdults(report.attendance.adults);
-                setKids(report.attendance.kids);
-                setVisitors(report.attendance.visitors);
-                setTeens(report.attendance.teens);
-                setVolunteerBreakdown(report.volunteerBreakdown || {});
-            }
-        } else {
-            // Default Preacher
-            if (preachers.length > 0) setPreacherId(preachers[0].id);
-        }
-    }, [id, isEditing, reports, preachers]);
-
-    // Calculate Total Volunteers
-    const totalVolunteers = useMemo(() => {
-        return (Object.values(volunteerBreakdown) as number[]).reduce((sum, count) => sum + count, 0);
-    }, [volunteerBreakdown]);
-
-    // Calculate Grand Total
-    const grandTotal = adults + kids + visitors + teens + totalVolunteers;
-
-    const handleSave = () => {
-        if (!campusId || !date || !time || !preacherId) {
-            alert('Preencha os campos obrigatórios');
-            return;
-        }
-
-        const reportData: Report = {
-            id: isEditing ? id! : Date.now().toString(),
-            campusId,
-            date,
-            time,
-            preacherId,
-            notes,
-            attendance: {
-                adults,
-                kids,
-                visitors,
-                teens,
-                volunteers: totalVolunteers
-            },
-            volunteerBreakdown,
-            createdAt: Date.now()
-        };
-
-        if (isEditing) {
-            updateReport(reportData);
-        } else {
-            addReport(reportData);
-        }
-        navigate(-1);
-    };
-
-    const handleDelete = () => {
-        if (confirm('Tem certeza que deseja excluir este relatório?')) {
-            if (id) deleteReport(id);
-            navigate(-1);
-        }
-    };
-
-    const handleQuickAddPreacher = () => {
-        if (newPreacherName.trim()) {
-            addPreacher(newPreacherName.trim());
-            setNewPreacherName('');
-            setShowAddPreacher(false);
-            // Optimistically select the new one? Requires finding the ID, 
-            // but for now context doesn't return ID. User can select from list.
-            alert('Preletor adicionado! Selecione na lista.');
-        }
-    };
+    // ...
 
     return (
         <div className="min-h-screen p-6 pb-24 bg-neo-bg">
@@ -125,7 +32,7 @@ export const ReportForm: React.FC = () => {
                     <NeoButton variant="ghost" size="sm" onClick={() => navigate(-1)} className="px-0">
                         <ArrowLeft size={16} /> VOLTAR
                     </NeoButton>
-                    {isEditing && (
+                    {isEditing && role === 'admin' && (
                         <button onClick={handleDelete} className="text-red-500 font-bold underline decoration-4 decoration-red-500">
                             EXCLUIR
                         </button>
