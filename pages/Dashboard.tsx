@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../context/StoreContext';
+import { useAuth } from '../context/AuthContext';
 import { NeoCard } from '../components/ui/NeoCard';
 import { Settings, Plus, Users, Church, Calendar } from 'lucide-react';
 
