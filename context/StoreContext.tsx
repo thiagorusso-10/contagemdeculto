@@ -113,11 +113,123 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
-  // ... (useAuth effect remains same)
+  useEffect(() => {
+    if (user) {
+      fetchData();
+    } else {
+      setLoading(false);
+    }
+  }, [user]);
 
-  // ... (addReport, updateReport, deleteReport remain same)
+  const addReport = async (report: Report) => {
+    if (!user) return;
 
-  // ... (addPreacher, deletePreacher remain same)
+    // Optimistic update
+    setState(prev => ({ ...prev, reports: [report, ...prev.reports] }));
+
+    const dbPayload = {
+      campus_id: report.campusId,
+      date: report.date,
+      time: report.time,
+      preacher_id: report.preacherId,
+      attendance_adults: report.attendance.adults,
+      attendance_kids: report.attendance.kids,
+      attendance_visitors: report.attendance.visitors,
+      attendance_teens: report.attendance.teens,
+      attendance_volunteers: report.attendance.volunteers,
+      volunteer_data: report.volunteerBreakdown,
+      notes: report.notes,
+      user_id: user.id
+    };
+
+    const { data, error } = await supabase.from('reports').insert(dbPayload).select();
+
+    if (error) {
+      console.error("Error adding report", error);
+      fetchData();
+    } else if (data) {
+      const realId = data[0].id;
+      const realCreatedAt = new Date(data[0].created_at).getTime();
+      setState(prev => ({
+        ...prev,
+        reports: prev.reports.map(r => r.id === report.id ? { ...r, id: realId, createdAt: realCreatedAt } : r)
+      }));
+    }
+  };
+
+  const updateReport = async (updatedReport: Report) => {
+    // Optimistic
+    setState(prev => ({
+      ...prev,
+      reports: prev.reports.map(r => r.id === updatedReport.id ? updatedReport : r)
+    }));
+
+    const dbPayload = {
+      campus_id: updatedReport.campusId,
+      date: updatedReport.date,
+      time: updatedReport.time,
+      preacher_id: updatedReport.preacherId,
+      attendance_adults: updatedReport.attendance.adults,
+      attendance_kids: updatedReport.attendance.kids,
+      attendance_visitors: updatedReport.attendance.visitors,
+      attendance_teens: updatedReport.attendance.teens,
+      attendance_volunteers: updatedReport.attendance.volunteers,
+      volunteer_data: updatedReport.volunteerBreakdown,
+      notes: updatedReport.notes,
+    };
+
+    const { error } = await supabase.from('reports').update(dbPayload).eq('id', updatedReport.id);
+    if (error) {
+      console.error("Error updating report", error);
+      fetchData();
+    }
+  };
+
+  const deleteReport = async (id: string) => {
+    // Optimistic
+    const previousReports = state.reports;
+    setState(prev => ({
+      ...prev,
+      reports: prev.reports.filter(r => r.id !== id)
+    }));
+
+    const { error } = await supabase.from('reports').delete().eq('id', id);
+
+    if (error) {
+      console.error("Error deleting report:", error);
+      alert("Erro ao excluir relatório no banco de dados. Verifique suas permissões.");
+      setState(prev => ({ ...prev, reports: previousReports }));
+    }
+  };
+
+  const addPreacher = async (name: string) => {
+    // Optimistic
+    const tempId = Date.now().toString();
+    setState(prev => ({ ...prev, preachers: [...prev.preachers, { id: tempId, name }] }));
+
+    const { data, error } = await supabase.from('preachers').insert({ name }).select();
+    if (error) {
+      console.error("Error adding preacher", error);
+      fetchData();
+    } else if (data) {
+      // Update temp ID
+      setState(prev => ({
+        ...prev,
+        preachers: prev.preachers.map(p => p.id === tempId ? { ...p, id: data[0].id } : p)
+      }));
+    }
+  };
+
+  const deletePreacher = async (id: string) => {
+    // Optimistic
+    setState(prev => ({ ...prev, preachers: prev.preachers.filter(p => p.id !== id) }));
+
+    const { error } = await supabase.from('preachers').delete().eq('id', id);
+    if (error) {
+      console.error("Error deleting preacher", error);
+      fetchData();
+    }
+  };
 
   const addVolunteerArea = async (name: string) => {
     // Optimistic
