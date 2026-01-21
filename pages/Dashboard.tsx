@@ -95,17 +95,20 @@ export const Dashboard: React.FC = () => {
 
 
       {/* Black Stats Bar */}
-      <div className="bg-black text-white p-2 border-b-4 border-black flex justify-end items-center gap-4 text-xs font-bold font-mono overflow-x-auto whitespace-nowrap">
-        <div className="flex items-center gap-2 pr-2">
-          <span className="text-gray-400">TOTAL EM {stats.date || '--/--'}:</span>
-          <span className="text-neo-cyan text-lg">{stats.totalPeople}</span>
-          <span className="text-gray-500 lowercase">pessoas</span>
+      <div className="bg-black text-white p-3 border-b-4 border-black flex justify-between items-center text-sm font-bold font-mono">
+        <span className="text-gray-400 uppercase tracking-widest text-[10px]">TOTAL GERAL</span>
+        <div className="flex items-center gap-2">
+          <span className="text-gray-500 text-xs">
+            {stats.date ? `${stats.date.split('/')[0]}/${stats.date.split('/')[1]}` : '--/--'}
+          </span>
+          <span className="text-neo-cyan text-2xl font-bold">{stats.totalPeople}</span>
+          <span className="text-gray-500 lowercase text-xs">pessoas</span>
         </div>
       </div>
 
       {/* Content Container */}
-      <div className="p-6 max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 auto-rows-fr">
+      <div className="p-4 max-w-6xl mx-auto pb-24">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 auto-rows-fr">
           {campuses.map(campus => {
             const summary = getLastReportSummary(campus.id);
 
@@ -113,30 +116,32 @@ export const Dashboard: React.FC = () => {
               <NeoCard
                 key={campus.id}
                 color={campus.color}
-                className="relative min-h-[200px] h-full flex flex-col justify-between hover:-translate-y-1 hover:-translate-x-1 hover:shadow-neo-hover transition-all duration-200"
+                className="relative min-h-[140px] flex flex-col justify-between hover:-translate-y-1 hover:-translate-x-1 hover:shadow-neo-hover transition-all duration-200"
                 onClick={() => navigate(`/campus/${campus.id}`)}
               >
-                <div className="relative z-10">
-                  <h2 className="text-2xl md:text-3xl font-bold uppercase mb-2 leading-tight">{campus.name}</h2>
-                  <div className="h-2 w-16 bg-black mb-6"></div>
+                <div className="relative z-10 flex justify-between items-start">
+                  <div>
+                    <h2 className="text-xl md:text-3xl font-bold uppercase mb-2 leading-tight max-w-[80%]">{campus.name}</h2>
+                    <div className="h-1 w-12 bg-black mb-2"></div>
+                  </div>
                 </div>
 
                 {summary ? (
-                  <div className="bg-white border-4 border-black p-3 self-start shadow-neo-sm relative z-10">
-                    <div className="text-xs font-bold uppercase text-gray-500 mb-1">Último Culto ({summary.date})</div>
+                  <div className="bg-white border-2 border-black p-2 self-start shadow-neo-sm relative z-10">
+                    <div className="text-[10px] font-bold uppercase text-gray-500 mb-0.5">Último Culto ({summary.date})</div>
                     <div className="flex items-center gap-2">
-                      <Users size={20} />
-                      <span className="font-bold text-2xl">{summary.total} Pessoas</span>
+                      <Users size={16} />
+                      <span className="font-bold text-xl">{summary.total} Pessoas</span>
                     </div>
                   </div>
                 ) : (
-                  <div className="opacity-50 font-bold text-sm italic border-4 border-dashed border-black p-3 inline-block relative z-10 bg-white/30 backdrop-blur-sm">
+                  <div className="opacity-50 font-bold text-xs italic border-2 border-dashed border-black p-2 inline-block relative z-10 bg-white/30 backdrop-blur-sm">
                     Sem dados recentes
                   </div>
                 )}
 
-                <div className="absolute top-4 right-4 opacity-10 pointer-events-none z-0">
-                  <Users size={80} />
+                <div className="absolute bottom-2 right-2 opacity-10 pointer-events-none z-0">
+                  <Users size={60} />
                 </div>
               </NeoCard>
             );
