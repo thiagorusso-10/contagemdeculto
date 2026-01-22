@@ -42,9 +42,16 @@ export function TeamManagement() {
             if (error) throw error;
 
             setUsers(data || []);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Erro ao buscar usuários:', error);
-            alert('Erro ao carregar usuários. Verifique se você é administrador.');
+
+            // Se o erro for de permissão ou função não encontrada
+            if (error.message?.includes('Acesso negado') || error.code === 'PGRST202' || error.code === '42501' || error.message?.includes('function public.get_users_management() does not exist')) {
+                // Mostra mensagem amigável com instruções
+                alert('Atenção: Você precisa rodar o script "fix_team_management_rpc.sql" no banco de dados Online (Supabase) para habilitar essa função.');
+            } else {
+                alert('Erro ao carregar usuários: ' + (error.message || 'Erro desconhecido'));
+            }
         } finally {
             setLoading(false);
         }
@@ -138,6 +145,9 @@ export function TeamManagement() {
                     <p className="text-sm mt-1">
                         Crie a conta (Email/Senha) no painel do Supabase ou peça para se cadastrarem.
                         Eles aparecerão nesta lista para você atribuir o cargo.
+                    </p>
+                    <p className="mt-4 pt-4 border-t border-yellow-200 text-xs font-mono text-gray-600">
+                        * Se der erro de "Acesso Negado", rode o arquivo <b>fix_team_management_rpc.sql</b> no Supabase.
                     </p>
                 </div>
 
