@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useStore } from '../context/StoreContext';
 import { useAuth } from '../context/AuthContext';
 import { NeoCard } from '../components/ui/NeoCard';
-import { Settings, Plus, Users, Church, Calendar, LogOut } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { Settings, Plus, Users, Church, Calendar } from 'lucide-react';
 
 export const Dashboard: React.FC = () => {
   const { campuses, reports } = useStore();
@@ -84,41 +83,30 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex gap-2">
           {/* History Button */}
           <button
             onClick={() => navigate('/history')}
-            className="bg-white w-12 h-12 flex items-center justify-center border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none transition-all hover:bg-gray-50"
+            className="bg-white w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none transition-all hover:bg-gray-50"
           >
-            <Calendar size={24} />
+            <Calendar size={20} />
           </button>
 
           {/* Settings Button */}
           <button
             onClick={() => navigate('/settings')}
-            className="bg-white w-12 h-12 flex items-center justify-center border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none transition-all hover:bg-gray-50"
+            className="bg-white w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none transition-all hover:bg-gray-50"
           >
-            <Settings size={24} />
-          </button>
-
-          {/* Logout Button (New) */}
-          <button
-            onClick={() => {
-              supabase.auth.signOut();
-              window.location.reload();
-            }}
-            className="bg-red-500 text-white w-12 h-12 flex items-center justify-center border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none transition-all hover:bg-red-600"
-          >
-            <LogOut size={24} />
+            <Settings size={20} />
           </button>
 
           {/* Team Button (Admin only) */}
           {role === 'admin' && (
             <button
               onClick={() => navigate('/team')}
-              className="bg-purple-200 w-12 h-12 flex items-center justify-center border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none transition-all hover:bg-purple-300"
+              className="bg-purple-200 w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none transition-all hover:bg-purple-300"
             >
-              <Users size={24} />
+              <Users size={20} />
             </button>
           )}
         </div>

@@ -213,7 +213,7 @@ export const Settings: React.FC = () => {
         <NeoButton variant="secondary" size="sm" onClick={() => navigate('/')} className="mb-4">
           <ArrowLeft size={16} /> VOLTAR
         </NeoButton>
-        <h1 className="text-3xl font-bold uppercase text-red-600">Configurações V2</h1>
+        <h1 className="text-3xl font-bold uppercase">Configurações</h1>
       </header>
 
       {/* Account Section */}
@@ -226,7 +226,17 @@ export const Settings: React.FC = () => {
               <p className="text-sm text-gray-500">{user?.email}</p>
             </div>
             <button
-              onClick={() => signOut()}
+              onClick={async () => {
+                try {
+                  await signOut();
+                  navigate('/login');
+                } catch (e) {
+                  // Fallback force
+                  localStorage.clear();
+                  window.location.href = '/#/login';
+                  window.location.reload();
+                }
+              }}
               className="bg-red-500 text-white font-bold border-4 border-black px-4 py-2 hover:bg-red-600 active:translate-y-1 transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none"
             >
               SAIR
