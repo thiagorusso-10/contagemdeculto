@@ -8,6 +8,7 @@ import { ReportForm } from './pages/ReportForm';
 import { Settings } from './pages/Settings';
 import { Login } from './pages/Login';
 import { History } from './pages/History';
+import { TeamManagement } from './pages/TeamManagement';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -55,6 +56,11 @@ function App() {
               <Route path="/settings" element={
                 <ProtectedRoute>
                   <Settings />
+                </ProtectedRoute>
+              } />
+              <Route path="/team" element={
+                <ProtectedRoute>
+                  <TeamManagement />
                 </ProtectedRoute>
               } />
               <Route path="*" element={<Navigate to="/" replace />} />

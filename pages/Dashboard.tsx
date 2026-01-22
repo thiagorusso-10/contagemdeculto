@@ -3,11 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { useStore } from '../context/StoreContext';
 import { useAuth } from '../context/AuthContext';
 import { NeoCard } from '../components/ui/NeoCard';
-import { Settings, Plus, Users, Church, Calendar } from 'lucide-react';
+import { Settings, Plus, Users, Church, Calendar, LogOut } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 export const Dashboard: React.FC = () => {
   const { campuses, reports } = useStore();
-  const { assignedCampusId } = useAuth();
+  const { assignedCampusId, role } = useAuth();
   const navigate = useNavigate();
 
   const visibleCampuses = useMemo(() => {
@@ -99,6 +100,27 @@ export const Dashboard: React.FC = () => {
           >
             <Settings size={24} />
           </button>
+
+          {/* Logout Button (New) */}
+          <button
+            onClick={() => {
+              supabase.auth.signOut();
+              window.location.reload();
+            }}
+            className="bg-red-500 text-white w-12 h-12 flex items-center justify-center border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none transition-all hover:bg-red-600"
+          >
+            <LogOut size={24} />
+          </button>
+
+          {/* Team Button (Admin only) */}
+          {role === 'admin' && (
+            <button
+              onClick={() => navigate('/team')}
+              className="bg-purple-200 w-12 h-12 flex items-center justify-center border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none transition-all hover:bg-purple-300"
+            >
+              <Users size={24} />
+            </button>
+          )}
         </div>
       </header>
 

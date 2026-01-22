@@ -53,13 +53,18 @@ export const ReportForm: React.FC = () => {
                             <select
                                 value={campusId}
                                 onChange={e => setCampusId(e.target.value)}
-                                disabled={isEditing || !!searchParams.get('campusId')}
-                                className={`w-full border-4 border-black p-3 font-bold bg-white shadow-neo-sm focus:outline-none focus:shadow-neo transition-all ${(isEditing || !!searchParams.get('campusId')) ? 'opacity-50 bg-gray-100 pointer-events-none' : ''
+                                disabled={isEditing || !!searchParams.get('campusId') || campuses.length === 0}
+                                className={`w-full border-4 border-black p-3 font-bold bg-white shadow-neo-sm focus:outline-none focus:shadow-neo transition-all ${(isEditing || !!searchParams.get('campusId') || campuses.length === 0) ? 'opacity-50 bg-gray-100 pointer-events-none' : ''
                                     }`}
                             >
-                                {campuses.map(c => (
-                                    <option key={c.id} value={c.id}>{c.name}</option>
-                                ))}
+                                <option value="" disabled>Selecione um campus...</option>
+                                {campuses.length > 0 ? (
+                                    campuses.map(c => (
+                                        <option key={c.id} value={c.id}>{c.name}</option>
+                                    ))
+                                ) : (
+                                    <option value="" disabled>Nenhum campus carregado</option>
+                                )}
                             </select>
                         </div>
 
