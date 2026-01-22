@@ -180,17 +180,19 @@ export function TeamManagement() {
 }
 
 // Sub-componente para cada Card de Usuário para organizar melhor
-function UserCard({
+interface UserCardProps {
+    user: UserData;
+    campuses: any[];
+    isUpdating: boolean;
+    onUpdate: (uid: string, role: string, cid: string) => void;
+}
+
+const UserCard: React.FC<UserCardProps> = ({
     user,
     campuses,
     isUpdating,
     onUpdate
-}: {
-    user: UserData,
-    campuses: any[], // Tipar corretamente se possível, mas any funciona pros props
-    isUpdating: boolean,
-    onUpdate: (uid: string, role: string | null, cid: string | null) => void
-}) {
+}) => {
     const [localRole, setLocalRole] = useState(user.role || '');
     const [localCampus, setLocalCampus] = useState(user.campus_id || '');
     const [hasChanges, setHasChanges] = useState(false);
