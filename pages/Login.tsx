@@ -44,7 +44,7 @@ export function Login() {
 
                 <form onSubmit={handleLogin} className="space-y-6">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                             Email
                         </label>
                         <div className="relative">
@@ -52,7 +52,9 @@ export function Login() {
                                 <Mail className="h-5 w-5 text-gray-400" />
                             </div>
                             <input
+                                id="email"
                                 type="email"
+                                autoComplete="email"
                                 required
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
@@ -63,7 +65,7 @@ export function Login() {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                             Senha
                         </label>
                         <div className="relative">
@@ -71,7 +73,9 @@ export function Login() {
                                 <Lock className="h-5 w-5 text-gray-400" />
                             </div>
                             <input
+                                id="password"
                                 type="password"
+                                autoComplete="current-password"
                                 required
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}

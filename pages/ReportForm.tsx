@@ -19,9 +19,116 @@ export const ReportForm: React.FC = () => {
     const isEditing = !!id;
     const initialCampusId = searchParams.get('campusId') || campuses[0]?.id;
 
-    // ... (state lines)
+    // State
+    const [campusId, setCampusId] = useState(initialCampusId || '');
+    const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+    const [time, setTime] = useState('19:30');
+    const [preacherId, setPreacherId] = useState('');
+    const [notes, setNotes] = useState('');
 
-    // ...
+    // Attendance
+    const [adults, setAdults] = useState(0);
+    const [kids, setKids] = useState(0);
+    const [visitors, setVisitors] = useState(0);
+    const [teens, setTeens] = useState(0);
+
+    // Volunteers
+    const [volunteerBreakdown, setVolunteerBreakdown] = useState<VolunteerBreakdown>({});
+    const [showVolunteerModal, setShowVolunteerModal] = useState(false);
+
+    // Dynamic Preacher Add
+    const [showAddPreacher, setShowAddPreacher] = useState(false);
+    const [newPreacherName, setNewPreacherName] = useState('');
+
+    // Load data if editing
+    useEffect(() => {
+        if (isEditing && id) {
+            const report = reports.find(r => r.id === id);
+            if (report) {
+                setCampusId(report.campusId);
+                setDate(report.date);
+                setTime(report.time);
+                setPreacherId(report.preacherId);
+                setNotes(report.notes);
+                setAdults(report.attendance.adults);
+                setKids(report.attendance.kids);
+                setVisitors(report.attendance.visitors);
+                setTeens(report.attendance.teens);
+                setVolunteerBreakdown(report.volunteerBreakdown || {});
+            }
+        }
+    }, [isEditing, id, reports]);
+
+    // Set initial campus if not set
+    useEffect(() => {
+        if (!campusId && campuses.length > 0) {
+            setCampusId(campuses[0].id);
+        }
+    }, [campuses, campusId]);
+
+    // Computed
+    const totalVolunteers = useMemo(() => {
+        return Object.values(volunteerBreakdown).reduce((a: number, b: number) => a + b, 0);
+    }, [volunteerBreakdown]);
+
+    const grandTotal = useMemo(() => {
+        return adults + kids + visitors + teens + totalVolunteers;
+    }, [adults, kids, visitors, teens, totalVolunteers]);
+
+    // Handlers
+    const handleSave = async () => {
+        if (!campusId || !preacherId) {
+            alert('Por favor, selecione o campus e o preletor.');
+            return;
+        }
+
+        const reportData: Report = {
+            id: id || Date.now().toString(), // Temp ID for new, kept for edit
+            campusId,
+            date,
+            time,
+            preacherId,
+            attendance: {
+                adults,
+                kids,
+                visitors,
+                teens,
+                volunteers: totalVolunteers
+            },
+            volunteerBreakdown,
+            notes,
+            createdAt: isEditing ? 0 : Date.now() // formatting handled in context/display
+        };
+
+        try {
+            if (isEditing) {
+                await updateReport(reportData);
+            } else {
+                await addReport(reportData);
+            }
+            navigate(-1);
+        } catch (error) {
+            console.error("Error saving:", error);
+            alert("Erro ao salvar relatório.");
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!id) return;
+        if (window.confirm('Tem certeza que deseja excluir este relatório?')) {
+            await deleteReport(id);
+            navigate(-1);
+        }
+    };
+
+    const handleQuickAddPreacher = async () => {
+        if (newPreacherName.trim()) {
+            await addPreacher(newPreacherName);
+            setNewPreacherName('');
+            setShowAddPreacher(false);
+            // Optionally select the new preacher here if context returns ID
+        }
+    };
 
     return (
         <div className="min-h-screen p-6 pb-24 bg-neo-bg">

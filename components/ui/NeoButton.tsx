@@ -6,16 +6,16 @@ interface NeoButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   icon?: React.ReactNode;
 }
 
-export const NeoButton: React.FC<NeoButtonProps> = ({ 
-  children, 
-  variant = 'primary', 
+export const NeoButton: React.FC<NeoButtonProps> = ({
+  children,
+  variant = 'primary',
   size = 'md',
   className = '',
   icon,
-  ...props 
+  ...props
 }) => {
-  const baseStyles = "font-bold border-4 border-black flex items-center justify-center gap-2 transition-all active:translate-x-[3px] active:translate-y-[3px] active:shadow-neo-sm";
-  
+  const baseStyles = "font-bold border-4 border-black flex items-center justify-center gap-2 transition-all active:translate-x-[3px] active:translate-y-[3px] active:shadow-neo-sm focus:outline-none focus-visible:ring-4 focus-visible:ring-black focus-visible:ring-offset-2";
+
   const variants = {
     primary: "bg-neo-yellow text-black shadow-neo hover:-translate-y-[1px] hover:-translate-x-[1px] hover:shadow-neo-hover",
     secondary: "bg-white text-black shadow-neo hover:-translate-y-[1px] hover:-translate-x-[1px] hover:shadow-neo-hover",
@@ -30,7 +30,7 @@ export const NeoButton: React.FC<NeoButtonProps> = ({
   };
 
   return (
-    <button 
+    <button
       className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
       {...props}
     >
