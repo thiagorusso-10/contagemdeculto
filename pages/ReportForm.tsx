@@ -42,9 +42,22 @@ export const ReportForm: React.FC = () => {
 
     // Load data if editing
     useEffect(() => {
+        if (role === 'global_viewer') {
+            alert('Você não tem permissão para criar ou editar relatórios.');
+            navigate('/');
+            return;
+        }
+
         if (isEditing && id) {
             const report = reports.find(r => r.id === id);
             if (report) {
+                // Security check for Campus Leader
+                if (role === 'campus_leader' && report.campusId !== useAuth().assignedCampusId && useAuth().assignedCampusId) {
+                    alert('Você só pode editar relatórios do seu próprio campus.');
+                    navigate('/');
+                    return;
+                }
+
                 setCampusId(report.campusId);
                 setDate(report.date);
                 setTime(report.time);
@@ -57,7 +70,7 @@ export const ReportForm: React.FC = () => {
                 setVolunteerBreakdown(report.volunteerBreakdown || {});
             }
         }
-    }, [isEditing, id, reports]);
+    }, [isEditing, id, reports, role]);
 
     // Set initial campus if not set
     useEffect(() => {

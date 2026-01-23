@@ -181,15 +181,17 @@ export const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* FAB */}
-      <div className="fixed bottom-6 right-6 z-30">
-        <button
-          onClick={() => navigate('/report/new')}
-          className="bg-black text-white w-16 h-16 flex items-center justify-center border-4 border-white shadow-[6px_6px_0px_0px_rgba(0,0,0,0.5)] active:translate-y-1 active:shadow-none transition-all hover:scale-105"
-        >
-          <Plus size={32} />
-        </button>
-      </div>
+      {/* FAB - Hide for global_viewer */}
+      {(role === 'admin' || role === 'campus_leader') && (
+        <div className="fixed bottom-6 right-6 z-30">
+          <button
+            onClick={() => navigate('/report/new')}
+            className="bg-black text-white w-16 h-16 flex items-center justify-center border-4 border-white shadow-[6px_6px_0px_0px_rgba(0,0,0,0.5)] active:translate-y-1 active:shadow-none transition-all hover:scale-105"
+          >
+            <Plus size={32} />
+          </button>
+        </div>
+      )}
     </div>
   );
 };
