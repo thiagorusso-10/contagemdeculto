@@ -3,11 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { useStore } from '../context/StoreContext';
 import { useAuth } from '../context/AuthContext';
 import { NeoCard } from '../components/ui/NeoCard';
-import { Settings, Plus, Users, Church, Calendar } from 'lucide-react';
+import { Settings, Plus, Users, Church, Calendar, LogOut } from 'lucide-react';
 
 export const Dashboard: React.FC = () => {
   const { campuses, reports } = useStore();
-  const { assignedCampusId, role } = useAuth();
+  const { assignedCampusId, role, signOut } = useAuth();
   const navigate = useNavigate();
 
   const visibleCampuses = useMemo(() => {
@@ -92,13 +92,24 @@ export const Dashboard: React.FC = () => {
             <Calendar size={20} />
           </button>
 
-          {/* Settings Button */}
-          <button
-            onClick={() => navigate('/settings')}
-            className="bg-white w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none transition-all hover:bg-gray-50"
-          >
-            <Settings size={20} />
-          </button>
+          {/* Settings Button (Admin Only) */}
+          {role === 'admin' ? (
+            <button
+              onClick={() => navigate('/settings')}
+              className="bg-white w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none transition-all hover:bg-gray-50"
+            >
+              <Settings size={20} />
+            </button>
+          ) : (
+            /* Logout Button (For Non-Admins) */
+            <button
+              onClick={signOut}
+              className="bg-red-500 text-white w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none transition-all hover:bg-red-600"
+              title="Sair"
+            >
+              <LogOut size={20} />
+            </button>
+          )}
 
           {/* Team Button (Admin only) */}
           {role === 'admin' && (
