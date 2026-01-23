@@ -14,24 +14,23 @@ export default defineConfig(({ mode }) => {
       react(),
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['icon.svg'],
+        includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'pwa-icon.png'],
         manifest: {
-          name: 'Contagem de Culto',
-          short_name: 'Contagem',
-          description: 'App de contagem de culto da INA VLNT',
+          name: 'Contagem de Culto INA',
+          short_name: 'INA Culto',
+          description: 'Gestão de cultos e voluntários da INA VLNT',
           theme_color: '#FBBF24',
-          background_color: '#f8fafc',
+          background_color: '#FBBF24',
           display: 'standalone',
+          scope: '/',
+          start_url: '/',
+          orientation: 'portrait',
           icons: [
             {
-              src: 'icon.svg',
-              sizes: '192x192',
-              type: 'image/svg+xml'
-            },
-            {
-              src: 'icon.svg',
-              sizes: '512x512',
-              type: 'image/svg+xml'
+              src: 'pwa-icon.png',
+              sizes: '1024x1024',
+              type: 'image/png',
+              purpose: 'any maskable'
             }
           ]
         }
