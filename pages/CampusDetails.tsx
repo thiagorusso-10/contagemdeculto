@@ -3,8 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useStore } from '../context/StoreContext';
 import { useAuth } from '../context/AuthContext';
 import { NeoButton } from '../components/ui/NeoButton';
-import { ArrowLeft, Plus, Calendar, User, Clock } from 'lucide-react';
-import { NeoCard } from '../components/ui/NeoCard';
+import { ArrowLeft, Plus, Clock, User, Sun, Moon } from 'lucide-react';
+import { Card } from '../components/ui/Card';
+import { formatServiceTime, getCampusColorBg } from '../lib/utils';
 
 export const CampusDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -20,74 +21,104 @@ export const CampusDetails: React.FC = () => {
   if (!campus) return <div>Campus não encontrado</div>;
 
   const getPreacherName = (id: string) => preachers.find(p => p.id === id)?.name || 'Desconhecido';
-
   const getTotal = (r: any) => r.attendance.adults + r.attendance.kids + r.attendance.visitors + r.attendance.teens + r.attendance.volunteers;
 
+  const accentClass = getCampusColorBg(campus.name);
+
   return (
-    <div className="min-h-screen p-6 pb-24">
-      <header className="mb-6">
-        <NeoButton variant="secondary" size="sm" onClick={() => navigate('/')} className="mb-4">
+    <div className="min-h-screen p-6 pb-24 transition-colors duration-300 bg-primary-bg dark:bg-slate-900">
+      {/* Header */}
+      <div className="max-w-xl mx-auto mb-6">
+        <NeoButton variant="ghost" size="sm" onClick={() => navigate('/')} className="mb-4 pl-0 hover:bg-transparent">
           <ArrowLeft size={16} /> VOLTAR
         </NeoButton>
-        <h1 className={`text-3xl font-bold uppercase p-2 border-4 border-black inline-block shadow-neo ${campus.color}`}>
-          {campus.name}
-        </h1>
-      </header>
+        <div className="flex items-center gap-3">
+          <div className={`w-2 h-12 rounded-full ${accentClass}`}></div>
+          <h1 className="text-3xl font-bold uppercase text-text-main dark:text-white tracking-tight">
+            {campus.name}
+          </h1>
+        </div>
+      </div>
 
-      <div className="space-y-4">
+      <div className="max-w-xl mx-auto space-y-4">
         {campusReports.length === 0 ? (
-          <div className="text-center py-12 opacity-60">
-            <p className="font-bold text-xl">Nenhum relatório ainda.</p>
-            <p>Clique em "+" para adicionar.</p>
+          <div className="text-center py-12 bg-white dark:bg-slate-800 rounded-2xl border border-dashed border-gray-200 dark:border-slate-700">
+            <p className="font-bold text-xl text-text-muted dark:text-slate-400 mb-2">Nenhum relatório ainda.</p>
+            <p className="text-sm text-text-muted dark:text-slate-500">Clique em "+" para adicionar o primeiro.</p>
           </div>
         ) : (
-          campusReports.map(report => (
-            <NeoCard
-              key={report.id}
-              onClick={() => navigate(`/report/edit/${report.id}`)}
-              className="group"
-            >
-              <div className="flex justify-between items-start">
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="bg-black text-white px-2 py-0.5 text-sm font-bold">
-                      {new Date(report.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
-                    </span>
-                    <span className="font-bold text-gray-600 flex items-center gap-1 text-sm">
-                      <Clock size={14} /> {report.time}
-                    </span>
+          campusReports.map(report => {
+            const timeLabel = formatServiceTime(report.time);
+            const isMorning = timeLabel.includes('MANHÃ');
+
+            return (
+              <Card
+                key={report.id}
+                accentColor={accentClass}
+                className="cursor-pointer hover:shadow-lg transition-all duration-200 group relative"
+                noPadding={false}
+              >
+                <div onClick={() => navigate(`/report/edit/${report.id}`)}>
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="bg-gray-100 dark:bg-slate-700 text-text-main dark:text-gray-200 px-2 py-1 rounded-md text-xs font-bold font-mono">
+                          {(() => {
+                            const [year, month, day] = report.date.split('-');
+                            return `${day}/${month}`;
+                          })()}
+                        </span>
+
+                        {/* Highlighted Time Badge */}
+                        <span className={`flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider border ${isMorning
+                          ? 'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-900/40'
+                          : 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-900/20 dark:text-indigo-400 dark:border-indigo-900/40'}`}>
+                          {isMorning ? <Sun size={10} /> : <Moon size={10} />}
+                          {timeLabel}
+                        </span>
+
+                      </div>
+                      <div className="text-sm font-medium text-text-muted dark:text-slate-300 flex items-center gap-1 pt-0">
+                        <User size={14} className="text-primary" />
+                        {getPreacherName(report.preacherId)}
+                      </div>
+                    </div>
+
+                    <div className="text-right">
+                      <div className="text-3xl font-black text-text-main dark:text-white leading-none tracking-tight">{getTotal(report)}</div>
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-text-muted dark:text-slate-400 mt-1">Total</div>
+                    </div>
                   </div>
-                  <div className="font-bold text-sm flex items-center gap-1 mb-2">
-                    <User size={14} /> {getPreacherName(report.preacherId)}
+
+                  {/* Mini Breakdown */}
+                  <div className="pt-3 border-t border-gray-100 dark:border-slate-700 grid grid-cols-5 gap-2">
+                    {[
+                      { label: 'Adultos', val: report.attendance.adults, color: 'text-cyan-600 dark:text-cyan-400' },
+                      { label: 'Crianças', val: report.attendance.kids, color: 'text-pink-500 dark:text-pink-400' },
+                      { label: 'Visitas', val: report.attendance.visitors, color: 'text-yellow-500 dark:text-yellow-400' },
+                      { label: 'Pré', val: report.attendance.teens, color: 'text-purple-500 dark:text-purple-400' },
+                      { label: 'Volunt.', val: report.attendance.volunteers, color: 'text-green-600 dark:text-green-400' },
+                    ].map((item, idx) => (
+                      <div key={idx} className="flex flex-col items-center bg-gray-50/50 dark:bg-slate-900/50 p-1.5 rounded-lg border border-transparent dark:border-slate-700/30">
+                        <span className="text-[9px] uppercase font-bold text-gray-400 dark:text-slate-500 mb-0.5">{item.label}</span>
+                        <span className={`font-bold text-lg leading-none ${item.color}`}>{item.val}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
-
-                <div className="text-right">
-                  <div className="text-3xl font-bold leading-none">{getTotal(report)}</div>
-                  <div className="text-xs font-bold uppercase tracking-wider">Total</div>
-                </div>
-              </div>
-
-              {/* Mini Breakdown */}
-              <div className="mt-4 pt-3 border-t-4 border-gray-100 flex flex-wrap gap-x-4 gap-y-2 text-xs font-bold text-gray-500 uppercase">
-                <span>ADUL: {report.attendance.adults}</span>
-                <span>CRIANÇAS: {report.attendance.kids}</span>
-                <span>VISIT: {report.attendance.visitors}</span>
-                <span>PRÉ: {report.attendance.teens}</span>
-                <span>VOL: {report.attendance.volunteers}</span>
-              </div>
-            </NeoCard>
-          ))
+              </Card>
+            );
+          })
         )}
       </div>
 
       {(role === 'admin' || (role === 'campus_leader' && assignedCampusId === id)) && (
-        <div className="fixed bottom-6 right-6 z-10">
+        <div className="fixed bottom-6 right-6 z-40">
           <button
             onClick={() => navigate(`/report/new?campusId=${id}`)}
-            className="bg-neo-yellow text-black w-16 h-16 flex items-center justify-center border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none transition-all"
+            className="w-14 h-14 bg-cta hover:bg-cta-hover text-white rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-300 flex items-center justify-center group"
           >
-            <Plus size={32} />
+            <Plus size={28} className="transition-transform group-hover:rotate-90" />
           </button>
         </div>
       )}

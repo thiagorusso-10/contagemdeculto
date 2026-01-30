@@ -1,205 +1,238 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../context/StoreContext';
 import { useAuth } from '../context/AuthContext';
-import { NeoCard } from '../components/ui/NeoCard';
-import { Settings, Plus, Users, Church, Calendar, LogOut } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
+import { Card } from '../components/ui/Card';
+import { getCampusColorBg } from '../lib/utils';
+import { Settings, Plus, Users, Church, Calendar, LogOut, Sun, Moon, TrendingUp } from 'lucide-react';
+import { AnalyticsModal } from '../components/charts/AnalyticsModal';
+import { NeoButton } from '../components/ui/NeoButton';
 
 export const Dashboard: React.FC = () => {
   const { campuses, reports } = useStore();
   const { assignedCampusId, role, signOut } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
+  const [showAnalytics, setShowAnalytics] = useState(false);
 
   const visibleCampuses = useMemo(() => {
+    if (role === 'admin' || role === 'global_viewer') {
+      return campuses;
+    }
     if (assignedCampusId) {
       return campuses.filter(c => c.id === assignedCampusId);
     }
-    return campuses;
-  }, [campuses, assignedCampusId]);
+    return [];
+  }, [campuses, assignedCampusId, role]);
 
-  // Helper to find last report stats (aggregated by date)
   const getLastReportSummary = (campusId: string) => {
     const campusReports = reports.filter(r => r.campusId === campusId);
-
     if (campusReports.length === 0) return null;
 
-    // 1. Find the most recent date among reports
-    // Sort descending by date string (YYYY-MM-DD works with string comparison)
     campusReports.sort((a, b) => b.date.localeCompare(a.date));
-
     const latestDate = campusReports[0].date;
-
-    // 2. Filter all reports that match this date
     const reportsOnLatestDate = campusReports.filter(r => r.date === latestDate);
 
-    // 3. Sum the attendance
     const total = reportsOnLatestDate.reduce((acc, r) => {
       return acc + r.attendance.adults + r.attendance.kids + r.attendance.visitors + r.attendance.teens + r.attendance.volunteers;
     }, 0);
 
-    // Format date DD/MM
     const [year, month, day] = latestDate.split('-');
-
     return { date: `${day}/${month}`, total };
   };
 
-  // Global Stats: Sum of ALL campuses on the LATEST AVAILABLE DATE
   const stats = useMemo(() => {
     if (reports.length === 0) return { totalPeople: 0, date: null };
 
-    // 1. Find the absolute latest date across ALL reports
     const sortedReports = [...reports].sort((a, b) => b.date.localeCompare(a.date));
     const latestDate = sortedReports[0].date;
-
-    // 2. Filter reports ONLY from that specific date
     const reportsOnLatestDate = reports.filter(r => r.date === latestDate);
 
-    // 3. Sum total
     const total = reportsOnLatestDate.reduce((acc, r) => {
       return acc + r.attendance.adults + r.attendance.kids + r.attendance.visitors + r.attendance.teens + r.attendance.volunteers;
     }, 0);
 
-    // Format date DD/MM
     const [year, month, day] = latestDate.split('-');
-    const formattedDate = `${day}/${month}`;
-
-    return { totalPeople: total, date: formattedDate };
+    return { totalPeople: total, date: `${day}/${month}` };
   }, [reports]);
 
+  const canViewAnalytics = role === 'admin' || role === 'global_viewer' || role === 'campus_leader';
+  const analyticsCampusId = (role === 'campus_leader' && assignedCampusId) ? assignedCampusId : undefined;
+
   return (
-    <div className="min-h-screen pb-24 bg-neo-bg">
-      {/* Yellow Brand Header */}
-      <header className="bg-neo-yellow border-b-4 border-black p-4 flex justify-between items-center sticky top-0 z-20">
-        <div className="flex items-center gap-4">
-          {/* Icon Box */}
-          <div className="bg-black w-12 h-12 flex items-center justify-center border-2 border-black">
-            <Church className="text-neo-yellow" size={24} strokeWidth={2.5} />
+    <div className="min-h-screen pb-24 page-transition">
+      {/* Analytics Modal */}
+      <AnalyticsModal
+        isOpen={showAnalytics}
+        onClose={() => setShowAnalytics(false)}
+        campusId={analyticsCampusId}
+      />
+
+      {/* Header */}
+      <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-gray-100 dark:border-slate-800 sticky top-0 z-30 transition-colors duration-300">
+        <div className="max-w-6xl mx-auto p-4 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className="bg-primary/10 w-10 h-10 rounded-xl flex items-center justify-center">
+              <Church className="text-primary" size={20} strokeWidth={2.5} />
+            </div>
+            <div>
+              <h1 className="text-lg font-bold leading-tight text-text-main dark:text-white">
+                CONTAGEM<br />DE CULTO
+              </h1>
+            </div>
           </div>
 
-          {/* Text */}
-          <div className="leading-none">
-            <h1 className="text-2xl font-black uppercase tracking-tighter">CONTAGEM<br />DE CULTO</h1>
-            <span className="text-xs font-bold opacity-70 tracking-widest">Gestão de Cultos</span>
+          <div className="flex gap-2">
+            {canViewAnalytics && (
+              <button
+                onClick={() => setShowAnalytics(true)}
+                className="w-10 h-10 flex items-center justify-center rounded-xl bg-cyan-50 dark:bg-cyan-900/20 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-100 dark:hover:bg-cyan-900/40 hover:shadow-md transition-all duration-200"
+                title="Análise Geral"
+              >
+                <TrendingUp size={20} />
+              </button>
+            )}
+
+            <button
+              onClick={toggleTheme}
+              className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-700 hover:shadow-md transition-all duration-200"
+              title="Alternar Tema"
+            >
+              {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
+
+            <button
+              onClick={() => navigate('/history')}
+              className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-700 hover:shadow-md transition-all duration-200"
+              title="Histórico"
+            >
+              <Calendar size={20} />
+            </button>
+
+            {role === 'admin' ? (
+              <button
+                onClick={() => navigate('/settings')}
+                className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-700 hover:shadow-md transition-all duration-200"
+                title="Configurações"
+              >
+                <Settings size={20} />
+              </button>
+            ) : (
+              <button
+                onClick={signOut}
+                className="w-10 h-10 flex items-center justify-center rounded-xl bg-red-50 dark:bg-red-900/20 text-red-500 hover:bg-red-100 hover:shadow-md transition-all duration-200"
+                title="Sair"
+              >
+                <LogOut size={20} />
+              </button>
+            )}
+
+            {role === 'admin' && (
+              <button
+                onClick={() => navigate('/team')}
+                className="w-10 h-10 flex items-center justify-center rounded-xl bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 hover:bg-white dark:hover:bg-slate-700 hover:shadow-md transition-all duration-200"
+                title="Equipe"
+              >
+                <Users size={20} />
+              </button>
+            )}
           </div>
-        </div>
-
-        <div className="flex gap-2">
-          {/* History Button */}
-          <button
-            onClick={() => navigate('/history')}
-            className="bg-white w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none transition-all hover:bg-gray-50"
-          >
-            <Calendar size={20} />
-          </button>
-
-          {/* Settings Button (Admin Only) */}
-          {role === 'admin' ? (
-            <button
-              onClick={() => navigate('/settings')}
-              className="bg-white w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none transition-all hover:bg-gray-50"
-            >
-              <Settings size={20} />
-            </button>
-          ) : (
-            /* Logout Button (For Non-Admins) */
-            <button
-              onClick={signOut}
-              className="bg-red-500 text-white w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none transition-all hover:bg-red-600"
-              title="Sair"
-            >
-              <LogOut size={20} />
-            </button>
-          )}
-
-          {/* Team Button (Admin only) */}
-          {role === 'admin' && (
-            <button
-              onClick={() => navigate('/team')}
-              className="bg-purple-200 w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none transition-all hover:bg-purple-300"
-            >
-              <Users size={20} />
-            </button>
-          )}
         </div>
       </header>
 
+      {/* Hero Stats */}
+      <div className="bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-800 py-6 mb-6 transition-colors duration-300">
+        <div className="max-w-6xl mx-auto px-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h2 className="text-sm font-semibold text-text-muted dark:text-slate-400 uppercase tracking-wider mb-1">
+              Total Geral ({stats.date || '--/--'})
+            </h2>
+            <div className="flex items-baseline gap-2">
+              <span className="text-4xl font-black text-primary tracking-tight">{stats.totalPeople}</span>
+              <span className="text-text-muted dark:text-slate-500 font-medium">pessoas</span>
+            </div>
+          </div>
 
-      {/* Black Stats Bar */}
-      <div className="bg-black text-white p-3 border-b-4 border-black flex justify-between items-center text-sm font-bold font-mono">
-        <span className="text-gray-400 uppercase tracking-widest text-[10px]">TOTAL GERAL</span>
-        <div className="flex items-center gap-2">
-          <span className="text-gray-500 text-xs">
-            {stats.date ? `${stats.date.split('/')[0]}/${stats.date.split('/')[1]}` : '--/--'}
-          </span>
-          <span className="text-neo-cyan text-2xl font-bold">{stats.totalPeople}</span>
-          <span className="text-gray-500 lowercase text-xs">pessoas</span>
+          {canViewAnalytics && (
+            <div className="hidden md:block">
+              <NeoButton
+                variant="ghost"
+                icon={<TrendingUp size={18} />}
+                onClick={() => setShowAnalytics(true)}
+                className="text-primary hover:bg-primary/5"
+              >
+                VER ANÁLISE DETALHADA
+              </NeoButton>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Content Container */}
-      <div className="p-4 max-w-6xl mx-auto pb-24">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 auto-rows-fr">
+      {/* Campus List */}
+      <div className="max-w-6xl mx-auto px-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 stagger-children">
           {visibleCampuses.map(campus => {
             const summary = getLastReportSummary(campus.id);
+            const accentColor = getCampusColorBg(campus.name);
 
-            // Format Name Helper
             const formatName = (name: string) => {
               if (name.toLowerCase().includes('campus')) {
                 return { line1: 'INA CAMPUS', line2: name.replace(/ina campus/i, '').trim() };
               }
               return { line1: 'INA', line2: name.replace(/ina/i, '').trim() };
             };
-
             const { line1, line2 } = formatName(campus.name);
 
             return (
-              <NeoCard
+              <Card
                 key={campus.id}
-                color={campus.color}
-                className="relative min-h-[120px] flex flex-col justify-between hover:-translate-y-1 hover:-translate-x-1 hover:shadow-neo-hover transition-all duration-200"
-                onClick={() => navigate(`/campus/${campus.id}`)}
+                accentColor={accentColor}
+                className="group cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300 relative overflow-hidden"
+                noPadding={false}
               >
-                <div className="relative z-10 flex justify-between items-start mb-2">
-                  <div className="flex flex-col items-start">
-                    <span className="font-bold text-lg leading-none mb-1">{line1}</span>
-                    <div className="relative inline-block">
-                      <span className="font-black text-2xl md:text-3xl leading-none uppercase z-10 relative">{line2}</span>
-                      <div className="absolute -bottom-1 left-0 w-full h-2 bg-black z-0"></div>
+                <div onClick={() => navigate(`/campus/${campus.id}`)}>
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <div className="text-xs font-bold text-text-muted dark:text-slate-400 mb-1">{line1}</div>
+                      <div className="text-2xl font-bold text-text-main dark:text-gray-100 leading-none uppercase">{line2}</div>
                     </div>
                   </div>
-                </div>
 
-                {summary ? (
-                  <div className="bg-white border-2 border-black p-2 self-start shadow-neo-sm relative z-10 mt-2">
-                    <div className="text-[10px] font-bold uppercase text-gray-500 mb-0.5 leading-none">Último Culto ({summary.date})</div>
-                    <div className="flex items-center gap-1">
-                      <Users size={16} />
-                      <span className="font-bold text-lg leading-none">{summary.total} Pessoas</span>
+                  {summary ? (
+                    <div className="bg-gray-50 dark:bg-slate-700/50 rounded-lg p-3 flex items-center justify-between">
+                      <div className="text-xs font-medium text-text-muted dark:text-slate-400">
+                        Último Culto <span className="font-bold text-slate-600 dark:text-slate-300">{summary.date}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-text-main dark:text-white">
+                        <Users size={16} className={`${accentColor.replace('bg-', 'text-')}`} />
+                        <span className="font-bold text-lg">{summary.total}</span>
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="opacity-50 font-bold text-xs italic border-2 border-dashed border-black p-2 inline-block relative z-10 bg-white/30 backdrop-blur-sm mt-2">
-                    Sem dados recentes
-                  </div>
-                )}
+                  ) : (
+                    <div className="bg-gray-50 dark:bg-slate-700/50 rounded-lg p-3 text-center text-xs text-text-muted italic">
+                      Sem dados recentes
+                    </div>
+                  )}
 
-                <div className="absolute bottom-2 right-2 opacity-10 pointer-events-none z-0">
-                  <Users size={50} />
+                  <div className="absolute top-2 right-2 opacity-5 dark:opacity-10 scale-150 rotate-12 transition-transform group-hover:rotate-0 group-hover:scale-125 duration-500 text-black dark:text-white">
+                    <Users size={64} />
+                  </div>
                 </div>
-              </NeoCard>
+              </Card>
             );
           })}
         </div>
       </div>
 
-      {/* FAB - Hide for global_viewer */}
+      {/* FAB */}
       {(role === 'admin' || role === 'campus_leader') && (
-        <div className="fixed bottom-6 right-6 z-30">
+        <div className="fixed bottom-6 right-6 z-40">
           <button
             onClick={() => navigate('/report/new')}
-            className="bg-black text-white w-16 h-16 flex items-center justify-center border-4 border-white shadow-[6px_6px_0px_0px_rgba(0,0,0,0.5)] active:translate-y-1 active:shadow-none transition-all hover:scale-105"
+            className="w-14 h-14 bg-cta hover:bg-cta-hover text-white rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-300 flex items-center justify-center group"
           >
-            <Plus size={32} />
+            <Plus size={28} className="transition-transform group-hover:rotate-90" />
           </button>
         </div>
       )}

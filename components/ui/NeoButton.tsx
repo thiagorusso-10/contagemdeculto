@@ -14,19 +14,19 @@ export const NeoButton: React.FC<NeoButtonProps> = ({
   icon,
   ...props
 }) => {
-  const baseStyles = "font-bold border-4 border-black flex items-center justify-center gap-2 transition-all active:translate-x-[3px] active:translate-y-[3px] active:shadow-neo-sm focus:outline-none focus-visible:ring-4 focus-visible:ring-black focus-visible:ring-offset-2";
+  const baseStyles = "font-bold rounded-xl flex items-center justify-center gap-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-light focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:translate-y-0.5 active:shadow-none";
 
   const variants = {
-    primary: "bg-neo-yellow text-black shadow-neo hover:-translate-y-[1px] hover:-translate-x-[1px] hover:shadow-neo-hover",
-    secondary: "bg-white text-black shadow-neo hover:-translate-y-[1px] hover:-translate-x-[1px] hover:shadow-neo-hover",
-    danger: "bg-red-500 text-white shadow-neo hover:-translate-y-[1px] hover:-translate-x-[1px] hover:shadow-neo-hover",
-    ghost: "bg-transparent border-none shadow-none text-black underline decoration-4 decoration-black active:translate-x-0 active:translate-y-0"
+    primary: "bg-primary text-white shadow-pop dark:shadow-none border border-transparent hover:-translate-y-0.5 hover:shadow-lg hover:border-primary-light dark:hover:border-slate-600",
+    secondary: "bg-white dark:bg-slate-800 text-text-main dark:text-gray-200 border-2 border-gray-100 dark:border-slate-700 shadow-sm hover:border-primary hover:text-primary dark:hover:border-primary dark:hover:text-primary hover:shadow-md",
+    danger: "bg-red-500 text-white shadow-pop dark:shadow-none hover:-translate-y-0.5 hover:shadow-lg hover:bg-red-600",
+    ghost: "bg-transparent text-text-muted dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-text-main dark:hover:text-white shadow-none"
   };
 
   const sizes = {
-    sm: "px-2 py-1 text-sm",
-    md: "px-4 py-3 text-base",
-    lg: "px-6 py-4 text-lg"
+    sm: "px-3 py-1.5 text-sm",
+    md: "px-4 py-2.5 text-base",
+    lg: "px-6 py-3.5 text-lg"
   };
 
   return (

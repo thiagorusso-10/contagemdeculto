@@ -1,40 +1,49 @@
-import React, { useState } from 'react';
-import { X, Plus, Trash2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
 import { useStore } from '../context/StoreContext';
-import { VolunteerBreakdown } from '../types';
 import { NeoButton } from './ui/NeoButton';
+import { Minus, Plus, X } from 'lucide-react';
+import { VolunteerBreakdown } from '../types';
 
 interface VolunteerModalProps {
   isOpen: boolean;
   onClose: () => void;
   breakdown: VolunteerBreakdown;
-  onChange: (newBreakdown: VolunteerBreakdown) => void;
+  onChange: (breakdown: VolunteerBreakdown) => void;
 }
 
-export const VolunteerModal: React.FC<VolunteerModalProps> = ({ 
-  isOpen, 
-  onClose, 
-  breakdown,
-  onChange 
-}) => {
-  const { volunteerAreas, addVolunteerArea, deleteVolunteerArea } = useStore();
+export const VolunteerModal: React.FC<VolunteerModalProps> = ({ isOpen, onClose, breakdown, onChange }) => {
+  const { volunteerAreas, addVolunteerArea } = useStore();
+  const [localBreakdown, setLocalBreakdown] = useState<VolunteerBreakdown>(breakdown);
+  const [isClosing, setIsClosing] = useState(false);
   const [newAreaName, setNewAreaName] = useState('');
   const [showAddArea, setShowAddArea] = useState(false);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (isOpen) {
+      setLocalBreakdown(breakdown);
+      setIsClosing(false);
+    }
+  }, [isOpen, breakdown]);
 
-  const handleCountChange = (areaId: string, delta: number) => {
-    const current = breakdown[areaId] || 0;
-    const next = current + delta;
-    if (next < 0) return;
-    
-    onChange({
-      ...breakdown,
-      [areaId]: next
+  const handleSave = () => {
+    onChange(localBreakdown);
+    handleClose();
+  };
+
+  const handleClose = () => {
+    setIsClosing(true);
+    setTimeout(onClose, 200);
+  };
+
+  const updateValue = (areaId: string, delta: number) => {
+    setLocalBreakdown(prev => {
+      const current = prev[areaId] || 0;
+      const newVal = Math.max(0, current + delta);
+      return { ...prev, [areaId]: newVal };
     });
   };
 
-  const handleCreateArea = () => {
+  const handleQuickAddArea = () => {
     if (newAreaName.trim()) {
       addVolunteerArea(newAreaName.trim());
       setNewAreaName('');
@@ -42,79 +51,90 @@ export const VolunteerModal: React.FC<VolunteerModalProps> = ({
     }
   };
 
+  if (!isOpen && !isClosing) return null;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="w-full max-w-md bg-white border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col max-h-[90vh]">
-        
+    <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity duration-200 ${isClosing || !isOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={handleClose}></div>
+
+      <div className={`bg-white dark:bg-slate-800 w-full max-w-sm rounded-[2rem] shadow-2xl overflow-hidden transform transition-all duration-300 ${isClosing ? 'scale-95 opacity-0 translate-y-4' : 'scale-100 opacity-100 translate-y-0'}`}>
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b-4 border-black bg-neo-pink">
-          <h2 className="text-xl font-bold uppercase">Áreas de Serviço</h2>
-          <button onClick={onClose} className="p-1 hover:bg-black hover:text-white transition-colors border-2 border-transparent hover:border-black">
-            <X size={24} />
+        <div className="bg-cta p-6 text-white flex justify-between items-center">
+          <div>
+            <h2 className="text-xl font-black uppercase tracking-tight">Voluntários</h2>
+            <p className="text-cta-foreground/80 text-sm font-medium">Equipes servindo hoje</p>
+          </div>
+          <button onClick={handleClose} className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition-colors">
+            <X size={20} />
           </button>
         </div>
 
-        {/* List */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {volunteerAreas.map(area => (
-            <div key={area.id} className="flex items-center justify-between gap-4 p-2 border-4 border-gray-200 hover:border-black transition-colors">
-              <span className="font-bold flex-1">{area.name}</span>
-              
-              <div className="flex items-center gap-3">
-                <button 
-                  onClick={() => handleCountChange(area.id, -1)}
-                  className="w-10 h-10 flex items-center justify-center border-4 border-black bg-white hover:bg-gray-100 active:translate-y-1 transition-all"
-                >
-                  -
-                </button>
-                <span className="w-8 text-center font-bold text-lg">
-                  {breakdown[area.id] || 0}
-                </span>
-                <button 
-                  onClick={() => handleCountChange(area.id, 1)}
-                  className="w-10 h-10 flex items-center justify-center border-4 border-black bg-neo-yellow hover:brightness-95 active:translate-y-1 transition-all"
-                >
-                  +
-                </button>
-              </div>
-            </div>
-          ))}
-
-          {volunteerAreas.length === 0 && (
-            <div className="text-center text-gray-500 py-4 italic">
-              Nenhuma área cadastrada.
-            </div>
-          )}
-
-          {/* New Area Form inside Modal */}
-          {showAddArea ? (
-            <div className="flex gap-2 mt-4 animate-in slide-in-from-bottom-2">
-              <input 
-                autoFocus
-                type="text" 
-                placeholder="Nome da área"
-                className="flex-1 border-4 border-black p-2 font-bold focus:outline-none focus:ring-4 focus:ring-neo-yellow"
-                value={newAreaName}
-                onChange={(e) => setNewAreaName(e.target.value)}
-              />
-              <button onClick={handleCreateArea} className="bg-black text-white px-4 font-bold border-4 border-black">OK</button>
-            </div>
-          ) : (
-            <NeoButton 
-              variant="secondary" 
-              className="w-full mt-4" 
-              onClick={() => setShowAddArea(true)}
-              icon={<Plus size={18} />}
+        {/* Content */}
+        <div className="p-6 max-h-[60vh] overflow-y-auto custom-scrollbar space-y-4">
+          {/* Add Area Button */}
+          <div className="flex justify-end mb-2">
+            <button
+              onClick={() => setShowAddArea(!showAddArea)}
+              className="text-xs font-bold text-primary uppercase hover:underline"
             >
-              CRIAR NOVA ÁREA
-            </NeoButton>
+              + Nova Área
+            </button>
+          </div>
+
+          {showAddArea && (
+            <div className="flex gap-2 mb-4 animate-in fade-in slide-in-from-top-2">
+              <input
+                type="text"
+                placeholder="Nome da área"
+                value={newAreaName}
+                onChange={e => setNewAreaName(e.target.value)}
+                className="flex-1 text-sm border border-gray-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary"
+              />
+              <button
+                onClick={handleQuickAddArea}
+                className="bg-primary text-white px-3 rounded-lg font-bold text-sm"
+              >
+                OK
+              </button>
+            </div>
           )}
+
+          {volunteerAreas.map(area => {
+            const count = localBreakdown[area.id] || 0;
+            return (
+              <div key={area.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-900/50 rounded-xl border border-gray-100 dark:border-slate-700">
+                <span className="font-bold text-gray-700 dark:text-gray-200 text-sm">{area.name}</span>
+
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => updateValue(area.id, -1)}
+                    className="w-8 h-8 rounded-full bg-white dark:bg-slate-800 shadow-sm border border-gray-200 dark:border-slate-600 flex items-center justify-center text-gray-400 hover:text-red-500 active:scale-90 transition-all"
+                  >
+                    <Minus size={16} />
+                  </button>
+
+                  <span className="w-6 text-center font-bold text-lg dark:text-white">{count}</span>
+
+                  <button
+                    onClick={() => updateValue(area.id, 1)}
+                    className="w-8 h-8 rounded-full bg-cta text-white shadow-lg shadow-cta/30 flex items-center justify-center hover:bg-cta-hover active:scale-90 transition-all"
+                  >
+                    <Plus size={16} />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t-4 border-black bg-gray-50">
-          <NeoButton className="w-full" onClick={onClose}>
-            CONCLUIR
+        <div className="p-4 border-t border-gray-100 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-800/50">
+          <NeoButton
+            onClick={handleSave}
+            className="w-full shadow-lg"
+            size="md"
+          >
+            CONFIRMAR
           </NeoButton>
         </div>
       </div>

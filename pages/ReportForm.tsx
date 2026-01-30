@@ -4,25 +4,31 @@ import { useStore } from '../context/StoreContext';
 import { useAuth } from '../context/AuthContext';
 import { Report, VolunteerBreakdown } from '../types';
 import { NeoButton } from '../components/ui/NeoButton';
-import { NeoCard } from '../components/ui/NeoCard';
+import { Card } from '../components/ui/Card';
 import { CounterInput } from '../components/ui/CounterInput';
 import { VolunteerModal } from '../components/VolunteerModal';
 import { ArrowLeft, Save, Plus, Trash } from 'lucide-react';
 
 export const ReportForm: React.FC = () => {
-    const { id } = useParams<{ id: string }>(); // If editing
+    const { id } = useParams<{ id: string }>();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const { campuses, preachers, volunteerAreas, addReport, updateReport, deleteReport, reports, addPreacher } = useStore();
-    const { role } = useAuth(); // Get role
+    const { role, assignedCampusId } = useAuth();
 
     const isEditing = !!id;
     const initialCampusId = searchParams.get('campusId') || campuses[0]?.id;
 
     // State
     const [campusId, setCampusId] = useState(initialCampusId || '');
-    const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-    const [time, setTime] = useState('19:30');
+    const [date, setDate] = useState(() => {
+        const d = new Date();
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    });
+    const [time, setTime] = useState('18:30');
     const [preacherId, setPreacherId] = useState('');
     const [notes, setNotes] = useState('');
 
@@ -40,7 +46,6 @@ export const ReportForm: React.FC = () => {
     const [showAddPreacher, setShowAddPreacher] = useState(false);
     const [newPreacherName, setNewPreacherName] = useState('');
 
-    // Load data if editing
     useEffect(() => {
         if (role === 'global_viewer') {
             alert('Você não tem permissão para criar ou editar relatórios.');
@@ -50,14 +55,17 @@ export const ReportForm: React.FC = () => {
 
         if (isEditing && id) {
             const report = reports.find(r => r.id === id);
+            if (!report) {
+                alert('Relatório não encontrado ou sem permissão de acesso.');
+                navigate('/');
+                return;
+            }
             if (report) {
-                // Security check for Campus Leader
-                if (role === 'campus_leader' && report.campusId !== useAuth().assignedCampusId && useAuth().assignedCampusId) {
+                if (role === 'campus_leader' && report.campusId !== assignedCampusId && assignedCampusId) {
                     alert('Você só pode editar relatórios do seu próprio campus.');
                     navigate('/');
                     return;
                 }
-
                 setCampusId(report.campusId);
                 setDate(report.date);
                 setTime(report.time);
@@ -70,16 +78,17 @@ export const ReportForm: React.FC = () => {
                 setVolunteerBreakdown(report.volunteerBreakdown || {});
             }
         }
-    }, [isEditing, id, reports, role]);
+    }, [isEditing, id, reports, role, assignedCampusId, navigate]);
 
-    // Set initial campus if not set
     useEffect(() => {
         if (!campusId && campuses.length > 0) {
             setCampusId(campuses[0].id);
         }
-    }, [campuses, campusId]);
+        if (role === 'campus_leader' && assignedCampusId) {
+            setCampusId(assignedCampusId);
+        }
+    }, [campuses, campusId, role, assignedCampusId]);
 
-    // Computed
     const totalVolunteers = useMemo(() => {
         return Object.values(volunteerBreakdown).reduce((a: number, b: number) => a + b, 0);
     }, [volunteerBreakdown]);
@@ -88,7 +97,6 @@ export const ReportForm: React.FC = () => {
         return adults + kids + visitors + teens + totalVolunteers;
     }, [adults, kids, visitors, teens, totalVolunteers]);
 
-    // Handlers
     const handleSave = async () => {
         if (!campusId || !preacherId) {
             alert('Por favor, selecione o campus e o preletor.');
@@ -96,29 +104,20 @@ export const ReportForm: React.FC = () => {
         }
 
         const reportData: Report = {
-            id: id || Date.now().toString(), // Temp ID for new, kept for edit
+            id: id || Date.now().toString(),
             campusId,
             date,
             time,
             preacherId,
-            attendance: {
-                adults,
-                kids,
-                visitors,
-                teens,
-                volunteers: totalVolunteers
-            },
+            attendance: { adults, kids, visitors, teens, volunteers: totalVolunteers },
             volunteerBreakdown,
             notes,
-            createdAt: isEditing ? 0 : Date.now() // formatting handled in context/display
+            createdAt: isEditing ? 0 : Date.now()
         };
 
         try {
-            if (isEditing) {
-                await updateReport(reportData);
-            } else {
-                await addReport(reportData);
-            }
+            if (isEditing) await updateReport(reportData);
+            else await addReport(reportData);
             navigate(-1);
         } catch (error) {
             console.error("Error saving:", error);
@@ -139,83 +138,82 @@ export const ReportForm: React.FC = () => {
             await addPreacher(newPreacherName);
             setNewPreacherName('');
             setShowAddPreacher(false);
-            // Optionally select the new preacher here if context returns ID
         }
     };
 
+    const inputClasses = "w-full p-2.5 rounded-lg border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all";
+    const labelClasses = "block text-xs font-bold text-text-muted dark:text-slate-400 uppercase tracking-wider mb-1.5";
+
     return (
-        <div className="min-h-screen p-6 pb-24 bg-neo-bg">
+        <div className="min-h-screen p-6 pb-24">
             <div className="max-w-xl mx-auto space-y-6">
 
                 {/* Header */}
                 <div className="flex items-center justify-between">
-                    <NeoButton variant="ghost" size="sm" onClick={() => navigate(-1)} className="px-0">
+                    <NeoButton variant="ghost" size="sm" onClick={() => navigate(-1)} className="px-0 hover:bg-transparent">
                         <ArrowLeft size={16} /> VOLTAR
                     </NeoButton>
                     {isEditing && role === 'admin' && (
-                        <button onClick={handleDelete} className="text-red-500 font-bold underline decoration-4 decoration-red-500">
-                            EXCLUIR
+                        <button onClick={handleDelete} className="text-red-500 font-bold hover:text-red-600 transition-colors text-sm flex items-center gap-1">
+                            <Trash size={14} /> EXCLUIR
                         </button>
                     )}
                 </div>
 
-                <h1 className="text-3xl font-bold uppercase">
+                <h1 className="text-2xl font-bold text-text-main dark:text-white">
                     {isEditing ? 'Editar Relatório' : 'Novo Relatório'}
                 </h1>
 
                 {/* General Info Card */}
-                <NeoCard>
-                    <h3 className="font-bold border-b-4 border-black mb-4 pb-1">INFORMAÇÕES GERAIS</h3>
+                <Card>
+                    <h3 className="text-sm font-bold text-primary mb-4 pb-2 border-b border-gray-100 dark:border-slate-700">INFORMAÇÕES</h3>
 
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-sm font-bold mb-1">CAMPUS</label>
+                            <label className={labelClasses}>Campus</label>
                             <select
                                 value={campusId}
                                 onChange={e => setCampusId(e.target.value)}
-                                disabled={isEditing || !!searchParams.get('campusId') || campuses.length === 0}
-                                className={`w-full border-4 border-black p-3 font-bold bg-white shadow-neo-sm focus:outline-none focus:shadow-neo transition-all ${(isEditing || !!searchParams.get('campusId') || campuses.length === 0) ? 'opacity-50 bg-gray-100 pointer-events-none' : ''
-                                    }`}
+                                disabled={isEditing || !!searchParams.get('campusId') || campuses.length === 0 || role === 'campus_leader'}
+                                className={`${inputClasses} ${(isEditing || !!searchParams.get('campusId') || campuses.length === 0 || role === 'campus_leader') ? 'bg-gray-50 dark:bg-slate-800 text-gray-500' : ''}`}
                             >
-                                <option value="" disabled>Selecione um campus...</option>
-                                {campuses.length > 0 ? (
-                                    campuses.map(c => (
-                                        <option key={c.id} value={c.id}>{c.name}</option>
-                                    ))
-                                ) : (
-                                    <option value="" disabled>Nenhum campus carregado</option>
-                                )}
+                                <option value="" disabled>Selecione...</option>
+                                {campuses.length > 0 ? campuses.map(c => (
+                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                )) : <option value="" disabled>Nenhum</option>}
                             </select>
                         </div>
 
-                        <div className="grid grid-cols-[1.6fr_1fr] gap-4">
+                        <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-bold mb-1">DATA</label>
+                                <label className={labelClasses}>Data</label>
                                 <input
                                     type="date"
                                     value={date}
                                     onChange={e => setDate(e.target.value)}
-                                    className="w-full border-4 border-black px-2 py-3 text-sm font-bold shadow-neo-sm focus:outline-none focus:shadow-neo transition-all"
+                                    className={inputClasses}
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-bold mb-1">HORÁRIO</label>
-                                <input
-                                    type="time"
+                                <label className={labelClasses}>Culto</label>
+                                <select
                                     value={time}
                                     onChange={e => setTime(e.target.value)}
-                                    className="w-full border-4 border-black px-2 py-3 text-sm font-bold shadow-neo-sm focus:outline-none focus:shadow-neo transition-all"
-                                />
+                                    className={inputClasses}
+                                >
+                                    <option value="09:30">MANHÃ</option>
+                                    <option value="18:30">NOITE</option>
+                                </select>
                             </div>
                         </div>
 
                         <div>
-                            <label className="block text-sm font-bold mb-1">PRELETOR</label>
+                            <label className={labelClasses}>Preletor</label>
                             <div className="flex gap-2">
                                 <select
                                     value={preacherId}
                                     onChange={e => setPreacherId(e.target.value)}
-                                    className="flex-1 border-4 border-black p-3 font-bold bg-white shadow-neo-sm focus:outline-none focus:shadow-neo transition-all"
+                                    className={inputClasses}
                                 >
                                     <option value="" disabled>Selecione...</option>
                                     {preachers.map(p => (
@@ -224,61 +222,60 @@ export const ReportForm: React.FC = () => {
                                 </select>
                                 <button
                                     onClick={() => setShowAddPreacher(!showAddPreacher)}
-                                    className="bg-neo-yellow border-4 border-black p-3 shadow-neo-sm active:translate-y-1 active:shadow-none transition-all"
+                                    className="bg-primary/10 text-primary hover:bg-primary hover:text-white px-3 rounded-lg transition-colors"
                                 >
                                     <Plus size={20} />
                                 </button>
                             </div>
-                            {/* Inline Add Preacher */}
                             {showAddPreacher && (
                                 <div className="mt-2 flex gap-2 animate-in fade-in slide-in-from-top-2">
                                     <input
                                         type="text"
-                                        placeholder="Nome do Preletor"
+                                        placeholder="Nome"
                                         value={newPreacherName}
                                         onChange={e => setNewPreacherName(e.target.value)}
-                                        className="flex-1 border-4 border-black p-2 text-sm font-bold"
+                                        className={inputClasses}
                                     />
-                                    <button onClick={handleQuickAddPreacher} className="bg-black text-white px-3 text-sm font-bold border-4 border-black">OK</button>
+                                    <button onClick={handleQuickAddPreacher} className="bg-primary text-white px-4 rounded-lg font-bold text-sm">OK</button>
                                 </div>
                             )}
                         </div>
                     </div>
-                </NeoCard>
+                </Card>
 
                 {/* Metrics Grid */}
-                <div className="grid grid-cols-2 gap-4">
-                    <CounterInput label="Adultos" value={adults} onChange={setAdults} color="bg-neo-cyan" />
-                    <CounterInput label="Crianças" value={kids} onChange={setKids} color="bg-neo-pink" />
-                    <CounterInput label="Visitas" value={visitors} onChange={setVisitors} color="bg-neo-yellow" />
-                    <CounterInput label="Pré-Adolesc." value={teens} onChange={setTeens} color="bg-neo-purple" />
+                <div className="grid grid-cols-2 gap-3">
+                    <CounterInput label="Adultos" value={adults} onChange={setAdults} />
+                    <CounterInput label="Crianças" value={kids} onChange={setKids} />
+                    <CounterInput label="Visitas" value={visitors} onChange={setVisitors} />
+                    <CounterInput label="Pré-Adolesc." value={teens} onChange={setTeens} />
                 </div>
 
-                {/* Volunteers Special Field - Updated Color */}
-                <CounterInput
-                    label="Voluntários"
-                    value={totalVolunteers}
-                    onChange={() => { }}
-                    readOnly
-                    color="bg-neo-green"
-                    onLabelClick={() => setShowVolunteerModal(true)}
-                />
-                <p className="text-xs text-center font-bold text-gray-500 -mt-4 mb-4">Toque em "EDITAR" acima para gerenciar áreas</p>
-
+                {/* Volunteers */}
+                <Card className="bg-green-50/50 dark:bg-green-900/10 border-green-100 dark:border-green-900/30">
+                    <div className="flex items-center justify-between mb-2">
+                        <label className="text-xs font-bold text-green-700 dark:text-green-400 uppercase tracking-widest">Voluntários</label>
+                        <button onClick={() => setShowVolunteerModal(true)} className="text-xs font-bold text-primary underline">EDITAR ÁREAS</button>
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-500 dark:text-gray-400">Total na equipe</span>
+                        <span className="text-3xl font-bold text-green-700 dark:text-green-400">{totalVolunteers}</span>
+                    </div>
+                </Card>
 
                 {/* Total Display */}
-                <div className="bg-black text-white p-6 border-4 border-white shadow-[6px_6px_0px_0px_#000] text-center">
-                    <h2 className="text-sm font-bold uppercase tracking-widest text-gray-400">Público Total</h2>
-                    <div className="text-6xl font-bold">{grandTotal}</div>
-                </div>
+                <Card className="bg-gray-900 dark:bg-black text-white border-0 text-center py-8">
+                    <h2 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Público Total</h2>
+                    <div className="text-5xl font-black tracking-tight">{grandTotal}</div>
+                </Card>
 
                 {/* Notes */}
-                <div className="space-y-2">
-                    <label className="font-bold">Observações</label>
+                <div className="space-y-1.5">
+                    <label className={labelClasses}>Observações</label>
                     <textarea
                         value={notes}
                         onChange={e => setNotes(e.target.value)}
-                        className="w-full border-4 border-black p-3 font-bold shadow-neo-sm focus:outline-none focus:shadow-neo min-h-[100px] transition-all"
+                        className={`${inputClasses} min-h-[100px] resize-none`}
                         placeholder="Algo especial aconteceu?"
                     />
                 </div>
@@ -287,7 +284,7 @@ export const ReportForm: React.FC = () => {
                 <NeoButton
                     onClick={handleSave}
                     size="lg"
-                    className="w-full"
+                    className="w-full shadow-lg hover:shadow-xl"
                     icon={<Save size={20} />}
                 >
                     SALVAR RELATÓRIO
