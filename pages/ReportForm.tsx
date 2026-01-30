@@ -141,7 +141,7 @@ export const ReportForm: React.FC = () => {
         }
     };
 
-    const inputClasses = "w-full p-2.5 rounded-lg border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all";
+    const inputClasses = "w-full h-12 px-3 rounded-lg border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all";
     const labelClasses = "block text-xs font-bold text-text-muted dark:text-slate-400 uppercase tracking-wider mb-1.5";
 
     return (
