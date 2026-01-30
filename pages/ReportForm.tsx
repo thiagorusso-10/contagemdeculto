@@ -184,7 +184,8 @@ export const ReportForm: React.FC = () => {
                             </select>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-[1fr_120px] gap-4 items-start">
+                        {/* Data + Culto: Equal width grid for visual balance */}
+                        <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className={labelClasses}>Data</label>
                                 <input
