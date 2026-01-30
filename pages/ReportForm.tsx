@@ -184,8 +184,8 @@ export const ReportForm: React.FC = () => {
                             </select>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="flex-1">
                                 <label className={labelClasses}>Data</label>
                                 <input
                                     type="date"
@@ -194,7 +194,7 @@ export const ReportForm: React.FC = () => {
                                     className={inputClasses}
                                 />
                             </div>
-                            <div>
+                            <div className="flex-1">
                                 <label className={labelClasses}>Culto</label>
                                 <select
                                     value={time}
