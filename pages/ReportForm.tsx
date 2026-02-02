@@ -184,28 +184,28 @@ export const ReportForm: React.FC = () => {
                             </select>
                         </div>
 
-                        {/* Data + Culto: Side-by-side with proportional widths */}
-                        <div className="flex gap-3">
-                            <div className="flex-[3]">
-                                <label className={labelClasses}>Data</label>
-                                <input
-                                    type="date"
-                                    value={date}
-                                    onChange={e => setDate(e.target.value)}
-                                    className={inputClasses}
-                                />
-                            </div>
-                            <div className="flex-[2]">
-                                <label className={labelClasses}>Culto</label>
-                                <select
-                                    value={time}
-                                    onChange={e => setTime(e.target.value)}
-                                    className={inputClasses}
-                                >
-                                    <option value="09:30">MANHÃ</option>
-                                    <option value="18:30">NOITE</option>
-                                </select>
-                            </div>
+                        {/* Data */}
+                        <div>
+                            <label className={labelClasses}>Data</label>
+                            <input
+                                type="date"
+                                value={date}
+                                onChange={e => setDate(e.target.value)}
+                                className={inputClasses}
+                            />
+                        </div>
+
+                        {/* Culto */}
+                        <div>
+                            <label className={labelClasses}>Culto</label>
+                            <select
+                                value={time}
+                                onChange={e => setTime(e.target.value)}
+                                className={inputClasses}
+                            >
+                                <option value="09:30">MANHÃ</option>
+                                <option value="18:30">NOITE</option>
+                            </select>
                         </div>
 
                         <div>
