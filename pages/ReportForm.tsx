@@ -191,7 +191,7 @@ export const ReportForm: React.FC = () => {
                                 type="date"
                                 value={date}
                                 onChange={e => setDate(e.target.value)}
-                                className={inputClasses}
+                                className={`${inputClasses} appearance-none`}
                             />
                         </div>
 
